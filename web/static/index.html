@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dg3sw 知识库</title>
+<style>
+  :root {
+    --bg: #f7f8fa; --panel: #ffffff; --border: #e3e6ea;
+    --text: #1f2430; --muted: #6b7280; --accent: #2563eb; --accent-soft: #eaf1fe;
+    --mark: #fde68a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column;
+  }
+  header {
+    display: flex; align-items: center; gap: 16px; padding: 10px 20px;
+    background: var(--panel); border-bottom: 1px solid var(--border);
+  }
+  header h1 { font-size: 16px; margin: 0; white-space: nowrap; }
+  header h1 span { color: var(--muted); font-weight: normal; font-size: 12px; margin-left: 8px; }
+  #searchBox {
+    flex: 1; max-width: 520px; padding: 8px 14px; font-size: 14px;
+    border: 1px solid var(--border); border-radius: 8px; outline: none;
+  }
+  #searchBox:focus { border-color: var(--accent); }
+  .layout { flex: 1; display: flex; min-height: 0; }
+  nav {
+    width: 300px; overflow-y: auto; background: var(--panel);
+    border-right: 1px solid var(--border); padding: 12px 0;
+  }
+  .group-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 16px; font-size: 13px; font-weight: 600; color: var(--muted);
+    cursor: pointer; user-select: none;
+  }
+  .group-head:hover { color: var(--accent); }
+  .group-head .cnt {
+    background: var(--accent-soft); color: var(--accent); border-radius: 10px;
+    padding: 0 8px; font-size: 11px; font-weight: 600;
+  }
+  .group-items a {
+    display: block; padding: 6px 16px 6px 28px; font-size: 13px;
+    color: var(--text); text-decoration: none; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap;
+  }
+  .group-items a:hover { background: var(--accent-soft); }
+  .group-items a.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  main { flex: 1; overflow-y: auto; padding: 28px 36px; }
+  .content { max-width: 880px; margin: 0 auto; background: var(--panel);
+    border: 1px solid var(--border); border-radius: 12px; padding: 32px 40px; }
+  .content h1 { font-size: 24px; margin: 0 0 6px; }
+  .content h2 { font-size: 19px; margin: 28px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  .content h3 { font-size: 16px; margin: 22px 0 8px; }
+  .content p { line-height: 1.8; margin: 10px 0; }
+  .content a { color: var(--accent); text-decoration: none; }
+  .content a:hover { text-decoration: underline; }
+  .content code { background: #f1f3f5; padding: 1px 6px; border-radius: 4px; font-size: 13px; }
+  .content pre { background: #f6f8fa; border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px 16px; overflow-x: auto; line-height: 1.5; }
+  .content pre code { background: none; padding: 0; }
+  .content blockquote { border-left: 3px solid var(--accent); margin: 12px 0; padding: 4px 16px;
+    background: var(--accent-soft); border-radius: 0 8px 8px 0; color: #374151; }
+  .content table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 13px; }
+  .content th, .content td { border: 1px solid var(--border); padding: 7px 12px; text-align: left; }
+  .content th { background: #f1f3f5; }
+  .content ul, .content ol { line-height: 1.8; padding-left: 24px; }
+  .content hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+  .meta { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 18px; }
+  .chip { font-size: 11px; background: var(--accent-soft); color: var(--accent);
+    border-radius: 10px; padding: 2px 10px; }
+  .path-line { font-size: 12px; color: var(--muted); margin-bottom: 18px;
+    font-family: monospace; }
+  .search-info { max-width: 880px; margin: 0 auto 16px; font-size: 13px; color: var(--muted); }
+  .result { max-width: 880px; margin: 0 auto 12px; background: var(--panel);
+    border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; cursor: pointer; }
+  .result:hover { border-color: var(--accent); }
+  .result .t { font-size: 15px; font-weight: 600; color: var(--accent); }
+  .result .p { font-size: 11px; color: var(--muted); font-family: monospace; margin: 2px 0 6px; }
+  .result .s { font-size: 13px; line-height: 1.7; color: #374151; }
+  mark { background: var(--mark); padding: 0 2px; border-radius: 2px; }
+  .empty { max-width: 880px; margin: 60px auto; text-align: center; color: var(--muted); }
+  .home-list { line-height: 2; }
+  .ask-box { width: 100%; padding: 12px 14px; font-size: 14px; font-family: inherit;
+    border: 1px solid var(--border); border-radius: 8px; resize: vertical; outline: none; }
+  .ask-box:focus { border-color: var(--accent); }
+  .ask-btn { margin: 12px 0 4px; padding: 9px 28px; font-size: 14px; border: none;
+    border-radius: 8px; background: var(--accent); color: #fff; cursor: pointer; }
+  .ask-btn:disabled { background: #9db8e8; cursor: wait; }
+  .ask-answer { margin-top: 20px; }
+  .ask-src { border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px;
+    margin: 8px 0; cursor: pointer; font-size: 13px; }
+  .ask-src:hover { border-color: var(--accent); }
+  .ask-src .n { display: inline-block; min-width: 22px; text-align: center;
+    background: var(--accent-soft); color: var(--accent); border-radius: 6px;
+    font-weight: 600; margin-right: 8px; }
+  .ask-status { color: var(--muted); font-size: 13px; margin: 10px 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>dg3sw 知识库<span id="stats"></span></h1>
+  <span id="enginePill" style="white-space:nowrap; font-size:11px; padding:3px 10px; border-radius:999px; background:#f3f4f6; color:#6b7280;">检测中…</span>
+  <input id="searchBox" type="search" placeholder="全文检索…（回车执行）">
+  <a href="#/ask" style="white-space:nowrap; font-size:13px; color:var(--accent); text-decoration:none; padding:6px 12px; border:1px solid var(--accent); border-radius:8px;">💬 AI 问答</a>
+</header>
+<div class="layout">
+  <nav id="tree"></nav>
+  <main id="main"><div class="empty">加载中…</div></main>
+</div>
+<script>
+"use strict";
+const $ = (s) => document.querySelector(s);
+
+/* ---------- 路由 ---------- */
+function navigate(hash) { location.hash = hash; }
+window.addEventListener("hashchange", render);
+
+/* ---------- 数据 ---------- */
+let treeData = [];
+async function loadTree() {
+  const r = await fetch("/api/tree");
+  treeData = (await r.json()).groups || [];
+  renderTree();
+  const n = treeData.reduce((a, g) => a + g.files.length, 0);
+  $("#stats").textContent = `· ${n} 篇`;
+}
+
+function renderTree(activePath) {
+  const nav = $("#tree");
+  nav.innerHTML = "";
+  for (const g of treeData) {
+    const head = document.createElement("div");
+    head.className = "group-head";
+    head.innerHTML = `<span>${esc(g.name)}</span><span class="cnt">${g.files.length}</span>`;
+    const items = document.createElement("div");
+    items.className = "group-items";
+    for (const f of g.files) {
+      const a = document.createElement("a");
+      a.textContent = f.title;
+      a.title = f.path;
+      a.href = "#/page/" + f.path;
+      if (f.path === activePath) a.classList.add("active");
+      items.appendChild(a);
+    }
+    head.onclick = () => { items.style.display = items.style.display === "none" ? "" : "none"; };
+    nav.appendChild(head);
+    nav.appendChild(items);
+  }
+}
+
+/* ---------- Markdown 渲染（自包含小渲染器） ---------- */
+function esc(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+function inline(s) {
+  s = esc(s);
+  s = s.replace(/`([^`]+)`/g, "<code>$1</code>");
+  s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  s = s.replace(/(^|[^*])\*([^*]+)\*/g, "$1<em>$2</em>");
+  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (m, text, url) => {
+    if (/^[a-z]+:\/\//i.test(url)) return `<a href="${url}" target="_blank" rel="noopener">${text}</a>`;
+    if (/\.md($|#)/i.test(url) || !/\.[a-z0-9]+($|#)/i.test(url)) {
+      const target = url.split("#")[0];
+      return `<a href="#/page/${encodeURI(target)}">${text}</a>`;
+    }
+    return `<a href="${url}" target="_blank" rel="noopener">${text}</a>`;
+  });
+  return s;
+}
+function renderMarkdown(src) {
+  // 拆 frontmatter
+  let meta = {};
+  const fm = src.match(/^---\n([\s\S]*?)\n---\n?/);
+  if (fm) {
+    src = src.slice(fm[0].length);
+    let key = null;
+    for (const line of fm[1].split("\n")) {
+      const kv = line.match(/^([A-Za-z_]+):\s*(.*)$/);
+      if (kv) {
+        key = kv[1];
+        const v = kv[2].trim();
+        meta[key] = v ? v : [];
+      } else if (key && /^\s+-\s+/.test(line)) {
+        if (!Array.isArray(meta[key])) meta[key] = meta[key] ? [meta[key]] : [];
+        meta[key].push(line.replace(/^\s+-\s+/, "").trim());
+      } else if (key && /^\s+/.test(line) && meta[key] && !Array.isArray(meta[key])) {
+        meta[key] += " " + line.trim();
+      }
+    }
+  }
+  const lines = src.split("\n");
+  const out = [];
+  let i = 0, listStack = [];
+  const closeLists = () => { while (listStack.length) { out.push(listStack.pop() === "ul" ? "</ul>" : "</ol>"); } };
+  while (i < lines.length) {
+    let line = lines[i];
+    // 代码块
+    if (/^```/.test(line)) {
+      closeLists();
+      const buf = [];
+      i++;
+      while (i < lines.length && !/^```/.test(lines[i])) { buf.push(lines[i]); i++; }
+      i++;
+      out.push(`<pre><code>${esc(buf.join("\n"))}</code></pre>`);
+      continue;
+    }
+    // 空行
+    if (/^\s*$/.test(line)) { closeLists(); i++; continue; }
+    // 标题
+    let m = line.match(/^(#{1,6})\s+(.*)$/);
+    if (m) {
+      closeLists();
+      const lv = m[1].length;
+      out.push(`<h${lv}>${inline(m[2])}</h${lv}>`);
+      i++; continue;
+    }
+    // 分隔线
+    if (/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(line)) { closeLists(); out.push("<hr>"); i++; continue; }
+    // 引用
+    if (/^>\s?/.test(line)) {
+      closeLists();
+      const buf = [];
+      while (i < lines.length && /^>\s?/.test(lines[i])) { buf.push(lines[i].replace(/^>\s?/, "")); i++; }
+      out.push(`<blockquote>${buf.map(inline).join("<br>")}</blockquote>`);
+      continue;
+    }
+    // 表格
+    if (/^\s*\|.*\|\s*$/.test(line) && i + 1 < lines.length && /^\s*\|[\s:|-]+\|\s*$/.test(lines[i + 1])) {
+      closeLists();
+      const parseRow = (l) => l.trim().replace(/^\||\|$/g, "").split("|").map((c) => inline(c.trim()));
+      out.push("<table><thead><tr>" + parseRow(line).map((c) => `<th>${c}</th>`).join("") + "</tr></thead><tbody>");
+      i += 2;
+      while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) {
+        out.push("<tr>" + parseRow(lines[i]).map((c) => `<td>${c}</td>`).join("") + "</tr>");
+        i++;
+      }
+      out.push("</tbody></table>");
+      continue;
+    }
+    // 列表
+    m = line.match(/^(\s*)([-*+]|\d+\.)\s+(.*)$/);
+    if (m) {
+      const depth = Math.floor(m[1].length / 2) + 1;
+      const type = /\d/.test(m[2]) ? "ol" : "ul";
+      while (listStack.length > depth) { out.push(listStack.pop() === "ul" ? "</ul>" : "</ol>"); }
+      while (listStack.length < depth) { listStack.push(type); out.push(`<${type}>`); }
+      out.push(`<li>${inline(m[3])}</li>`);
+      i++; continue;
+    }
+    // 段落
+    closeLists();
+    const buf = [line];
+    i++;
+    while (i < lines.length && !/^\s*$/.test(lines[i]) && !/^(#{1,6}\s|```|>\s?|\s*[-*+]\s|\s*\d+\.\s|\s*\|)/.test(lines[i])) {
+      buf.push(lines[i]); i++;
+    }
+    out.push(`<p>${buf.map(inline).join("<br>")}</p>`);
+  }
+  closeLists();
+  return { html: out.join("\n"), meta };
+}
+
+/* ---------- 页面 ---------- */
+async function showPage(path) {
+  $("#main").innerHTML = '<div class="empty">加载中…</div>';
+  renderTree(path);
+  let data;
+  try {
+    const r = await fetch("/api/page?path=" + encodeURIComponent(path));
+    data = await r.json();
+    if (data.error) throw new Error(data.error);
+  } catch (e) {
+    $("#main").innerHTML = `<div class="empty">页面加载失败：${esc(String(e))}</div>`;
+    return;
+  }
+  const { html, meta } = renderMarkdown(data.content);
+  const chips = [];
+  for (const k of ["type", "status", "date"]) {
+    if (meta[k]) chips.push(`<span class="chip">${esc(k)}: ${esc(String(meta[k]))}</span>`);
+  }
+  if (Array.isArray(meta.tags)) chips.push(meta.tags.map((t) => `<span class="chip">${esc(t)}</span>`).join(""));
+  else if (meta.tags) chips.push(`<span class="chip">${esc(String(meta.tags))}</span>`);
+  $("#main").innerHTML = `
+    <div class="content">
+      <h1>${esc(data.title)}</h1>
+      <div class="meta">${chips.join("")}</div>
+      <div class="path-line">📄 ${esc(data.path)}</div>
+      ${html}
+    </div>`;
+  $("#main").scrollTop = 0;
+}
+
+/* ---------- 搜索 ---------- */
+async function showSearch(q) {
+  $("#main").innerHTML = '<div class="empty">检索中…</div>';
+  renderTree();
+  $("#searchBox").value = q;
+  let data;
+  try {
+    const r = await fetch("/api/search?q=" + encodeURIComponent(q));
+    data = await r.json();
+  } catch (e) {
+    $("#main").innerHTML = `<div class="empty">检索失败：${esc(String(e))}</div>`;
+    return;
+  }
+  const rs = data.results || [];
+  if (!rs.length) {
+    $("#main").innerHTML = `<div class="empty">没有找到「${esc(q)}」相关内容</div>`;
+    return;
+  }
+  let html = `<div class="search-info">找到 ${rs.length} 篇与「${esc(q)}」相关的页面（${data.elapsed_ms} ms）</div>`;
+  for (const r of rs) {
+    let sn = esc(r.snippet);
+    if (r.hits && r.hits.length) {
+      const marks = [...r.hits].sort((a, b) => b[0] - a[0]);
+      for (const [s, e] of marks) {
+        sn = sn.slice(0, s) + "<mark>" + sn.slice(s, e) + "</mark>" + sn.slice(e);
+      }
+    }
+    html += `<div class="result" data-path="${esc(r.path)}">
+      <div class="t">${esc(r.title)}</div>
+      <div class="p">${esc(r.path)}</div>
+      <div class="s">${sn}</div>
+    </div>`;
+  }
+  $("#main").innerHTML = html;
+  $("#main").querySelectorAll(".result").forEach((el) => {
+    el.onclick = () => navigate("#/page/" + el.dataset.path);
+  });
+}
+
+/* ---------- 首页 ---------- */
+function showHome() {
+  renderTree();
+  let html = '<div class="content"><h1>dg3sw 知识库</h1><p>只读浏览与全文检索。从左侧选择页面，或在上方输入关键词检索。</p>';
+  html += '<div class="home-list">';
+  for (const g of treeData) {
+    html += `<p><strong>${esc(g.name)}</strong>（${g.files.length} 篇）<br>`;
+    html += g.files.slice(0, 6).map((f) => `<a href="#/page/${encodeURI(f.path)}">${esc(f.title)}</a>`).join(" · ");
+    if (g.files.length > 6) html += ` <a href="#/search/${encodeURIComponent(g.name)}">…</a>`;
+    html += "</p>";
+  }
+  html += "</div></div>";
+  $("#main").innerHTML = html;
+}
+
+/* ---------- llm_wiki 引擎状态 ---------- */
+async function refreshEnginePill() {
+  const pill = $("#enginePill");
+  if (!pill) return;
+  try {
+    const r = await fetch("/api/status");
+    const d = await r.json();
+    if (d.engine) {
+      pill.innerHTML = "🟢 llm_wiki 引擎在线 · powered by llm_wiki";
+      pill.style.background = "#dcfce7";
+      pill.style.color = "#166534";
+    } else {
+      pill.innerHTML = "⚪ llm_wiki 未运行 · 本地兜底问答";
+      pill.style.background = "#fef3c7";
+      pill.style.color = "#92400e";
+    }
+    return d.engine;
+  } catch (e) {
+    pill.textContent = "状态未知";
+    return false;
+  }
+}
+window.addEventListener("load", refreshEnginePill);
+setInterval(refreshEnginePill, 30000);
+
+/* ---------- AI 问答（llm_wiki 引擎代理） ---------- */
+let askSessionId = "";
+function showAsk() {
+  renderTree();
+  $("#main").innerHTML = `
+    <div class="content">
+      <h1>AI 问答</h1>
+      <div id="askMode" style="font-size:13px; padding:10px 14px; border-radius:10px; margin-bottom:12px;"></div>
+      <p>支持多轮对话。</p>
+      <textarea class="ask-box" id="askBox" rows="3" placeholder="例如：休眠无法唤醒通常怎么排查？"></textarea>
+      <button class="ask-btn" id="askBtn">提问</button>
+      <button class="ask-btn" id="askNewBtn" style="background:#e5e7eb;color:#374151">新对话</button>
+      <div id="askStatus" class="ask-status"></div>
+      <div id="askAnswer" class="ask-answer"></div>
+    </div>`;
+  const submit = async () => {
+    const q = $("#askBox").value.trim();
+    if (!q) return;
+    $("#askBtn").disabled = true;
+    $("#askStatus").textContent = "llm_wiki 引擎思考中…（约 10–60 秒）";
+    let data;
+    try {
+      const r = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: q, sessionId: askSessionId }),
+      });
+      data = await r.json();
+    } catch (e) {
+      $("#askStatus").textContent = "请求失败：" + String(e);
+      $("#askBtn").disabled = false;
+      return;
+    }
+    $("#askBtn").disabled = false;
+    if (data.error) {
+      $("#askStatus").textContent = data.error;
+      return;
+    }
+    if (data.sessionId) askSessionId = data.sessionId;
+    const isEngine = data.via === "engine";
+    const badge = isEngine
+      ? '<span style="background:#dcfce7;color:#166534;padding:2px 10px;border-radius:999px;font-size:12px;">🟢 llm_wiki 引擎回答</span>'
+      : '<span style="background:#fef3c7;color:#92400e;padding:2px 10px;border-radius:999px;font-size:12px;">⚪ 本地兜底回答</span>';
+    $("#askStatus").innerHTML =
+      `${badge} · 参考 ${data.sources.length} 篇 · ${data.elapsed_ms} ms` +
+      (askSessionId ? ` · 会话 ${askSessionId.slice(0, 12)}…` : "");
+    const { html } = renderMarkdown(data.answer);
+    let src = "";
+    if (data.sources.length) {
+      src = "<h3>参考来源</h3>" + data.sources.map((s) => `
+        <div class="ask-src" ${/\.md$/i.test(s.path) ? `data-path="${esc(s.path)}"` : ""}>
+          <span class="n">[${s.n}]</span>${esc(s.title)}
+          <span style="color:var(--muted); font-family:monospace; font-size:11px;"> · ${esc(s.path)}</span>
+        </div>`).join("");
+    }
+    $("#askAnswer").innerHTML += `<div class="ask-answer">${html}${src}</div>`;
+    $("#askAnswer").querySelectorAll(".ask-src[data-path]").forEach((el) => {
+      el.onclick = () => navigate("#/page/" + el.dataset.path);
+    });
+    $("#main").scrollTop = $("#askAnswer").scrollHeight;
+    $("#askBox").value = "";
+    $("#askBox").focus();
+  };
+  refreshEnginePill().then((on) => {
+    const m = $("#askMode");
+    if (!m) return;
+    if (on) {
+      m.style.background = "#dcfce7";
+      m.style.color = "#166534";
+      m.innerHTML = "🟢 <strong>llm_wiki 引擎在线</strong>——回答由 llm_wiki 生成（知识库检索 + agent + skills），并自动携带会话历史支持多轮追问。";
+    } else {
+      m.style.background = "#fef3c7";
+      m.style.color = "#92400e";
+      m.innerHTML = "⚪ <strong>llm_wiki 未运行</strong>——当前使用本地简化检索兜底回答。打开 llm_wiki 桌面应用后，本页自动切换为引擎增强问答。";
+    }
+  });
+  $("#askBtn").onclick = submit;
+  $("#askNewBtn").onclick = () => {
+    askSessionId = "";
+    $("#askAnswer").innerHTML = "";
+    $("#askStatus").textContent = "已开启新对话。";
+    $("#askBox").focus();
+  };
+  $("#askBox").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) submit();
+  });
+  $("#askBox").focus();
+}
+
+/* ---------- 渲染入口 ---------- */
+function render() {
+  const h = decodeURIComponent(location.hash.replace(/^#\/?/, ""));
+  if (h.startsWith("page/")) return showPage(h.slice(5));
+  if (h.startsWith("search/")) return showSearch(h.slice(7));
+  if (h === "ask") return showAsk();
+  showHome();
+}
+
+$("#searchBox").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && e.target.value.trim()) {
+    navigate("#/search/" + encodeURIComponent(e.target.value.trim()));
+  }
+});
+
+loadTree().then(render);
+</script>
+</body>
+</html>
